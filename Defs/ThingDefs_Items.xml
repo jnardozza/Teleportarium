@@ -1,0 +1,103 @@
+<ThingDefs>
+  <ThingDef ParentName="ApparelUtilityBeltBase">
+    <thingClass>Apparel</thingClass>
+    <defName>TeleportHomer</defName>
+    <label>teleport homer</label>
+    <description>A compact device worn in the utility slot. Allows a limited number of teleport recalls to a Teleportarium platform. Can be refueled with chemfuel.</description>
+    <techLevel>Industrial</techLevel>
+    <tickerType>Normal</tickerType>
+    <generateAllowChance>0.15</generateAllowChance>
+    <allowedArchonexusCount>1</allowedArchonexusCount>
+    <tradeTags>
+      <li>Clothing</li>
+    </tradeTags>
+    <!-- <graphicData>
+      <texPath>Things/Apparel/TeleportHomer</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.75</drawSize>
+    </graphicData> -->
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/BroadshieldPack/BroadshieldPack</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(0.7,0.7)</drawSize>
+    </graphicData>
+    <apparel>
+      <wornGraphicPath>Things/Apparel/TeleportHomer</wornGraphicPath>
+      <wornGraphicData>
+        <renderUtilityAsPack>true</renderUtilityAsPack>
+        <north>
+          <offset>(0,-0.15)</offset>
+        </north>
+        <east>
+          <offset>(-0.35,-0.05)</offset>
+        </east>
+        <west>
+          <offset>(0.35,-0.05)</offset>
+        </west>
+        <male><scale>(0.75,0.75)</scale></male>
+        <female><scale>(0.75,0.75)</scale></female>
+      </wornGraphicData>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <bodyPartGroups>
+        <li>Waist</li>
+      </bodyPartGroups>
+      <layers>
+        <li>Belt</li>
+      </layers>
+      <tags>
+        <li>Utility</li>
+      </tags>
+    </apparel>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <statBases>
+      <WorkToMake>12000</WorkToMake>
+      <MaxHitPoints>80</MaxHitPoints>
+      <Mass>0.5</Mass>
+      <Flammability>0.4</Flammability>
+      <EquipDelay>2</EquipDelay>
+      <ArmorRating_Blunt>0.1</ArmorRating_Blunt>
+      <ArmorRating_Sharp>0.1</ArmorRating_Sharp>
+    </statBases>
+    <recipeMaker>
+      <unfinishedThingDef>UnfinishedPack</unfinishedThingDef>
+      <researchPrerequisite>Fabrication</researchPrerequisite>
+      <recipeUsers>
+        <li>FabricationBench</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Smith</soundWorking>
+      <skillRequirements>
+        <Crafting>6</Crafting>
+      </skillRequirements>
+      <displayPriority>315</displayPriority>
+    </recipeMaker>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>4</ComponentIndustrial>
+      <ComponentSpacer>2</ComponentSpacer>
+    </costList>
+    <comps>
+      <li Class="Teleportarium.CompProperties_TeleportHomer">
+        <recallCharges>3</recallCharges>
+      </li>
+      <li Class="CompProperties_ApparelReloadable">
+        <maxCharges>3</maxCharges>
+        <ammoDef>ComponentSpacer</ammoDef>
+        <ammoCountToRefill>3</ammoCountToRefill>
+        <baseReloadTicks>60</baseReloadTicks>
+        <soundReload>Standard_Reload</soundReload>
+        <hotKey>Misc4</hotKey>
+        <chargeNoun>recall</chargeNoun>
+        <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+      </li>
+    </comps>
+  </ThingDef>
+</ThingDefs>

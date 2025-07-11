@@ -8,5 +8,7 @@ namespace Teleportarium
         {
             this.compClass = typeof(CompTeleportarium);
         }
+
+        public float powerConsumption = 1000f;
     }
 }

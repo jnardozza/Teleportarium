@@ -8,7 +8,7 @@
     <graphicData>
       <texPath>Things/Building/Misc/TeleportariumPlatform</texPath>
       <graphicClass>Graphic_Single</graphicClass>
-      <drawSize>3</drawSize>
+      <drawSize>(2,2)</drawSize>
       <drawRotated>false</drawRotated>
       <drawOffset>(0,0,-0.05)</drawOffset>
       <shadowData>
@@ -16,17 +16,31 @@
         <offset>(0,0,-0.12)</offset>
       </shadowData>
     </graphicData>
-    <costList>
-      <Steel>300</Steel>
-      <ComponentSpacer>5</ComponentSpacer>
-      <Plasteel>100</Plasteel>
-      <AdvancedComponent>2</AdvancedComponent>
-    </costList>
+    <researchPrerequisites>
+      <li>MultiAnalyzer</li>
+    </researchPrerequisites>
+    <altitudeLayer>Building</altitudeLayer>
+    <passability>Standable</passability>
+    <fillPercent>0.1</fillPercent>
+    <statBases>
+      <MaxHitPoints>300</MaxHitPoints>
+      <WorkToBuild>20000</WorkToBuild>
+      <Flammability>0.2</Flammability>
+    </statBases>
+    <size>(2,2)</size>
+    <designationCategory>Misc</designationCategory>
+    <rotatable>false</rotatable>
     <building>
-      <destroySound>BuildingDestroyed_Metal_Big</destroySound>
-    </building>
+			<isEdifice>false</isEdifice>
+		</building>
+    <costList>
+      <Steel>800</Steel>
+      <Plasteel>400</Plasteel>
+      <ComponentSpacer>16</ComponentSpacer>
+      <ComponentIndustrial>10</ComponentIndustrial>
+    </costList>
+    <tickerType>Normal</tickerType>
     <comps>
-      <li Class="CompProperties_Forbiddable"/>
       <li Class="CompProperties_Power">
         <compClass>CompPowerTrader</compClass>
         <basePowerConsumption>1000</basePowerConsumption>
@@ -35,37 +49,8 @@
       <li Class="CompProperties_Flickable"/>
       <li Class="Teleportarium.CompProperties_Teleportarium" />
     </comps>
-    <altitudeLayer>Building</altitudeLayer>
-    <canBeUsedUnderRoof>false</canBeUsedUnderRoof>
-    <statBases>
-      <MaxHitPoints>300</MaxHitPoints>
-      <WorkToBuild>20000</WorkToBuild>
-      <Flammability>0.2</Flammability>
-      <Beauty>-20</Beauty>
-    </statBases>
-    <hasInteractionCell>true</hasInteractionCell>
-    <interactionCellOffset>(0,0,2)</interactionCellOffset>
-    <interactionCellIcon>DiningChair</interactionCellIcon>
-    <interactionCellIconReverse>true</interactionCellIconReverse>
-    <fillPercent>0.40</fillPercent>
-    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
-    <passability>PassThroughOnly</passability>
-    <pathCost>50</pathCost>
-    <designationCategory>Misc</designationCategory>
-    <rotatable>true</rotatable>
-    <canOverlapZones>false</canOverlapZones>
-    <size>(3,3)</size>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
-    <placeWorkers>
-      <li>PlaceWorker_NotUnderRoof</li>
-      <li>PlaceWorker_PreventInteractionSpotOverlap</li>
-    </placeWorkers>
-    <defaultPlacingRot>South</defaultPlacingRot>
-    <researchPrerequisites>
-      <li>MultiAnalyzer</li>
-    </researchPrerequisites>
-    <constructionSkillPrerequisite>10</constructionSkillPrerequisite>
-    <tickerType>Normal</tickerType>
-    <minifiable>true</minifiable>
+    <canOverlapZones>true</canOverlapZones>
+    <constructionSkillPrerequisite>14</constructionSkillPrerequisite>
   </ThingDef>
 </Defs>
