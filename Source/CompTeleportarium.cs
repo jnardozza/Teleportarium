@@ -13,10 +13,16 @@ namespace Teleportarium
         public CompProperties_Teleportarium Props => (CompProperties_Teleportarium)props;
         private bool poweringUp = false;
         private int powerUpTicks = 0;
+        private bool recallPending = false;
+        private int recallTicks = 0;
+        private List<Thing> recallThings = null;
+        private Teleportarium.CompTeleportHomer recallHomer = null;
+        private const int RecallDelay = 360; // 6 seconds at 60 ticks/sec
+        private const float RecallPowerDrain = 20000f; // ~2000 watts second
         private Map targetMap;
         private IntVec3 targetCell;
-        private const int PowerUpDuration = 600; // 10 seconds at 60 ticks/sec
-        private const float PowerDrain = 10000f; // Massive power drain
+        private const int PowerUpDuration = 360; // 6 seconds at 60 ticks/sec
+        private const float PowerDrain = 20000f; // ~2000 watts second
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
@@ -36,47 +42,54 @@ namespace Teleportarium
                 defaultLabel = "Recall equipped pawn",
                 defaultDesc = "Recall a pawn with a teleport homer. All pawns and items in a 2x2 area around them will be teleported here.",
                 icon = ContentFinder<Texture2D>.Get("UI/Commands/DesirePower"),
-                action = BeginRecallTargeting
+                action = ShowRecallPawnDialog
             };
         }
 
-        // Target a pawn with a teleport homer for recall
-        private void BeginRecallTargeting()
+        // Show a dialog to select a pawn with a teleport homer for recall
+        private void ShowRecallPawnDialog()
         {
-            Find.Targeter.BeginTargeting(
-                new TargetingParameters {
-                    canTargetPawns = true,
-                    canTargetBuildings = false,
-                    canTargetLocations = false,
-                    validator = target =>
-                    {
-                        Pawn pawn = target.Thing as Pawn;
-                        if (pawn == null || pawn.apparel == null)
-                            return false;
-                        return pawn.apparel.WornApparel.Any(a => a.GetComp<Teleportarium.CompTeleportHomer>() != null && a.GetComp<Teleportarium.CompTeleportHomer>().CanRecall);
-                    }
-                },
-                OnRecallPawnSelected,
-                null, null, null, null, null, true, null, null
-            );
-        }
-
-        // Called when a pawn with a teleport homer is selected
-        private void OnRecallPawnSelected(LocalTargetInfo target)
-        {
-            Pawn pawn = target.Thing as Pawn;
-            if (pawn == null || pawn.apparel == null)
+            var pawnsWithHomer = new List<Pawn>();
+            foreach (var map in Find.Maps)
             {
-                Messages.Message("Invalid target for recall.", MessageTypeDefOf.RejectInput);
+                foreach (var pawn in map.mapPawns.AllPawnsSpawned)
+                {
+                    if (pawn.apparel != null)
+                    {
+                        foreach (var apparel in pawn.apparel.WornApparel)
+                        {
+                            var homer = apparel.GetComp<Teleportarium.CompTeleportHomer>();
+                            if (homer != null && homer.CanRecall)
+                            {
+                                pawnsWithHomer.Add(pawn);
+                            }
+                        }
+                    }
+                }
+            }
+            if (pawnsWithHomer.Count == 0)
+            {
+                Messages.Message("No pawns with a charged teleport homer found!", MessageTypeDefOf.RejectInput);
                 return;
             }
+            List<FloatMenuOption> options = new List<FloatMenuOption>();
+            foreach (var pawn in pawnsWithHomer)
+            {
+                var pawnLabel = pawn.LabelShortCap + " (" + pawn.Map.Parent.Label + ")";
+                options.Add(new FloatMenuOption(pawnLabel, () => RecallPawn(pawn)));
+            }
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        // Recall logic for selected pawn
+        private void RecallPawn(Pawn pawn)
+        {
             var homer = pawn.apparel.WornApparel.Select(a => a.GetComp<Teleportarium.CompTeleportHomer>()).FirstOrDefault(c => c != null && c.CanRecall);
             if (homer == null)
             {
-                Messages.Message("Targeted pawn does not have a charged teleport homer.", MessageTypeDefOf.RejectInput);
+                Messages.Message("Selected pawn does not have a charged teleport homer.", MessageTypeDefOf.RejectInput);
                 return;
             }
-            // Find all pawns and items in a 2x2 area around the pawn
             var map = pawn.Map;
             var center = pawn.Position;
             var cells = GenRadial.RadialCellsAround(center, 1, true).Take(4).ToList();
@@ -91,19 +104,12 @@ namespace Teleportarium
                 Messages.Message("No pawns or items to recall!", MessageTypeDefOf.RejectInput);
                 return;
             }
-            // Teleport all to this platform
-            var destCells = parent.OccupiedRect().Cells.ToList();
-            int i = 0;
-            foreach (var thing in thingsToRecall)
-            {
-                IntVec3 dest = destCells[i % destCells.Count];
-                if (thing.Spawned)
-                    thing.DeSpawn();
-                GenSpawn.Spawn(thing, dest, parent.Map);
-                i++;
-            }
-            homer.ConsumeCharge();
-            Messages.Message($"Teleport recall complete! ({homer.ChargesLeft} charges left)", parent, MessageTypeDefOf.PositiveEvent);
+            // Begin recall powering up phase
+            recallPending = true;
+            recallTicks = 0;
+            recallThings = thingsToRecall;
+            recallHomer = homer;
+            Messages.Message("Teleportarium recall powering up!", parent, MessageTypeDefOf.PositiveEvent);
         }
 
         private void BeginTargeting()
@@ -159,12 +165,65 @@ namespace Teleportarium
                 if (power != null)
                 {
                     power.PowerOutput = -PowerDrain;
+                    // Check for sufficient power every tick
+                    if (power.PowerNet != null && power.PowerNet.CurrentStoredEnergy() < 0.01f)
+                    {
+                        Messages.Message("Teleportation failed: insufficient power! Device damaged.", parent, MessageTypeDefOf.NegativeEvent);
+                        parent.HitPoints = Mathf.Max(1, parent.HitPoints - 50);
+                        poweringUp = false;
+                        powerUpTicks = 0;
+                        power.PowerOutput = -Props.powerConsumption;
+                        return;
+                    }
                 }
                 if (powerUpTicks >= PowerUpDuration)
                 {
                     DoTeleport();
                     poweringUp = false;
                     powerUpTicks = 0;
+                    if (power != null)
+                        power.PowerOutput = -Props.powerConsumption;
+                }
+            }
+            if (recallPending)
+            {
+                recallTicks++;
+                CompPowerTrader power = parent.TryGetComp<CompPowerTrader>();
+                if (power != null)
+                {
+                    power.PowerOutput = -RecallPowerDrain;
+                    // Check for sufficient power every tick
+                    if (power.PowerNet != null && power.PowerNet.CurrentStoredEnergy() < 0.01f)
+                    {
+                        Messages.Message("Teleportation recall failed: insufficient power! Device damaged.", parent, MessageTypeDefOf.NegativeEvent);
+                        parent.HitPoints = Mathf.Max(1, parent.HitPoints - 50);
+                        recallPending = false;
+                        recallTicks = 0;
+                        recallThings = null;
+                        recallHomer = null;
+                        power.PowerOutput = -Props.powerConsumption;
+                        return;
+                    }
+                }
+                if (recallTicks >= RecallDelay)
+                {
+                    // Perform recall
+                    var destCells = parent.OccupiedRect().Cells.ToList();
+                    int i = 0;
+                    foreach (var thing in recallThings)
+                    {
+                        IntVec3 dest = destCells[i % destCells.Count];
+                        if (thing.Spawned)
+                            thing.DeSpawn();
+                        GenSpawn.Spawn(thing, dest, parent.Map);
+                        i++;
+                    }
+                    recallHomer.ConsumeCharge();
+                    Messages.Message($"Teleport recall complete! ({recallHomer.ChargesLeft} charges left)", parent, MessageTypeDefOf.PositiveEvent);
+                    recallPending = false;
+                    recallTicks = 0;
+                    recallThings = null;
+                    recallHomer = null;
                     if (power != null)
                         power.PowerOutput = -Props.powerConsumption;
                 }
@@ -194,7 +253,7 @@ namespace Teleportarium
                 }
                 GenSpawn.Spawn(thing, dest, targetMap);
             }
-            Messages.Message("Teleportarium complete!", parent, MessageTypeDefOf.PositiveEvent);
+            Messages.Message("Teleportation complete!", parent, MessageTypeDefOf.PositiveEvent);
         }
     }
 }
