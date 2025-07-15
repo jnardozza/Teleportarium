@@ -4,10 +4,26 @@
   <author>xannihilusx</author>
   <packageId>xannihilusx.teleportarium</packageId>
   <supportedVersions>
-    <li>1.5</li>
     <li>1.6</li>
   </supportedVersions>
   <description>
-    Adds a Teleportarium Platform that can teleport pawns to any map location after a power-up sequence.
+    Adds Imperial Teleportarium technology to RimWorld:
+    
+    - Build Teleportarium Platforms (2x2 and 3x3) to send pawns and items across the map or between maps.
+    - Construct a Teleportarium Cogitator (manned control station) to operate the platforms. Requires power and a pawn to man the cogitator.
+    - Equip pawns with Teleport Homers to recall them (and nearby items/pawns) back to a platform from anywhere in the world.
+    - Teleportation requires a power-up sequence, drains extra power, and can fail if energy is insufficient.
+    - All teleportation and recall actions are gated behind research and require advanced components.
+    - Includes custom sound effects and UI for teleportation and recall.
+    
+    Buildings added:
+    - Teleportarium Platform (2x2)
+    - Large Teleportarium Platform (3x3)
+    - Teleportarium Cogitator (control station)
+    
+    Equipment added:
+    - Teleport Homer (apparel for recall)
+    
+    Use the cogitator to activate teleportation or recall equipped pawns. Requires power, a manned cogitator, and a linked platform on the same power network.
   </description>
 </ModMetaData>

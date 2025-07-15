@@ -8,10 +8,10 @@ using System.Linq;
 using Verse.Sound;
 
 namespace Teleportarium
-
 {
     public class CompCogitator : ThingComp
     {
+        private Mote chargingGlowMote;
         private bool poweringUp = false;
         private int powerUpTicks = 0;
         private bool recallPending = false;
@@ -213,7 +213,20 @@ namespace Teleportarium
                         poweringUp = false;
                         powerUpTicks = 0;
                         power.PowerOutput = -power.Props.PowerConsumption;
+                        if (chargingGlowMote != null && !chargingGlowMote.Destroyed)
+                            chargingGlowMote.Destroy();
+                        chargingGlowMote = null;
                         return;
+                    }
+                }
+                // Spawn the lightning glow fleck over the teleporter pad every 10 ticks during charging
+                if (selectedPad != null && powerUpTicks % 10 == 0)
+                {
+                    Vector3 padCenter = selectedPad.Position.ToVector3Shifted();
+                    Map padMap = selectedPad.Map;
+                    if (padMap != null)
+                    {
+                        FleckMaker.ThrowLightningGlow(padCenter, padMap, 3.5f); // Adjust size as desired
                     }
                 }
                 if (powerUpTicks == 1)
@@ -230,6 +243,9 @@ namespace Teleportarium
                     powerUpTicks = 0;
                     if (power != null)
                         power.PowerOutput = -power.Props.PowerConsumption;
+                    if (chargingGlowMote != null && !chargingGlowMote.Destroyed)
+                        chargingGlowMote.Destroy();
+                    chargingGlowMote = null;
                 }
             }
             if (recallPending)
@@ -326,6 +342,9 @@ namespace Teleportarium
                 }
                 GenSpawn.Spawn(thing, dest, targetMap);
             }
+            // Play base game lightning sound effect (on-map variant for more impact)
+            SoundDef lightningSound = SoundDef.Named("Thunder_OnMap");
+            lightningSound?.PlayOneShot(SoundInfo.InMap(platform));
             Messages.Message("Teleportation complete!", platform, MessageTypeDefOf.PositiveEvent);
         }
     }
