@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <SoundDef>
+    <defName>teleporter_40k_thundercrack</defName>
+    <sustain>false</sustain>
+    <context>MapOnly</context>
+    <maxSimultaneous>1</maxSimultaneous>
+    <priorityMode>PrioritizeNearest</priorityMode>
+    <subSounds>
+      <li>
+        <muteWhenPaused>True</muteWhenPaused>
+        <grains>
+          <li Class="AudioGrain_Clip">
+            <clipPath>Teleporter/teleporter_40k_thundercrack</clipPath>
+          </li>
+        </grains>
+        <pitchRange>1.0~1.0</pitchRange>
+        <volumeRange>50~50</volumeRange>
+        <distRange>50~50</distRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+</Defs>

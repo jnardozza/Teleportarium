@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
+  <!-- small teleportarium platform -->
   <ThingDef ParentName="BuildingBase">
     <thingClass>Teleportarium.Building_TeleportariumPlatform</thingClass>
     <defName>TeleportariumPlatform</defName>
     <label>teleportarium platform</label>
-    <description>A mysterious platform capable of teleporting pawns to distant locations. Requires massive power to operate.</description>
+    <description>An ancient device of the Imperium, capable of hurling pawns across the void through the Immaterium. Only the most powerful energies can fuel its arcane mechanisms.</description>
     <graphicData>
       <texPath>Things/Building/Misc/TeleportariumPlatform</texPath>
       <graphicClass>Graphic_Single</graphicClass>
@@ -17,7 +18,7 @@
       </shadowData>
     </graphicData>
     <researchPrerequisites>
-      <li>MultiAnalyzer</li>
+      <li>WarpMatterTeleportation</li>
     </researchPrerequisites>
     <altitudeLayer>Building</altitudeLayer>
     <passability>Standable</passability>
@@ -31,8 +32,8 @@
     <designationCategory>Misc</designationCategory>
     <rotatable>false</rotatable>
     <building>
-			<isEdifice>false</isEdifice>
-		</building>
+      <isEdifice>false</isEdifice>
+    </building>
     <costList>
       <Steel>800</Steel>
       <Plasteel>400</Plasteel>
@@ -47,10 +48,121 @@
       </li>
       <li Class="CompProperties_Breakdownable"/>
       <li Class="CompProperties_Flickable"/>
-      <li Class="Teleportarium.CompProperties_Teleportarium" />
     </comps>
     <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
     <canOverlapZones>true</canOverlapZones>
     <constructionSkillPrerequisite>14</constructionSkillPrerequisite>
+  </ThingDef>
+
+  <!-- large teleportarium platform -->
+  <ThingDef ParentName="BuildingBase">
+    <thingClass>Teleportarium.Building_TeleportariumPlatform</thingClass>
+    <defName>TeleportariumPlatformLarge</defName>
+    <label>large teleportarium platform</label>
+    <description>A colossal teleportarium platform, forged in the image of Imperial technology. It rends reality, casting pawns through the warp to distant worlds. Its operation demands prodigious power and unwavering faith.</description>
+    <graphicData>
+      <texPath>Things/Building/Misc/TeleportariumPlatform3x3</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(3,3)</drawSize>
+      <drawRotated>false</drawRotated>
+      <drawOffset>(0,0,-0.05)</drawOffset>
+      <shadowData>
+        <volume>(2.8, 0.5, 2.8)</volume>
+        <offset>(0,0,-0.15)</offset>
+      </shadowData>
+    </graphicData>
+    <researchPrerequisites>
+      <li>WarpMatterTeleportation</li>
+    </researchPrerequisites>
+    <altitudeLayer>Building</altitudeLayer>
+    <passability>Standable</passability>
+    <fillPercent>0.1</fillPercent>
+    <statBases>
+      <MaxHitPoints>500</MaxHitPoints>
+      <WorkToBuild>24000</WorkToBuild>
+      <Flammability>0.2</Flammability>
+    </statBases>
+    <size>(3,3)</size>
+    <designationCategory>Misc</designationCategory>
+    <rotatable>false</rotatable>
+    <building>
+      <isEdifice>false</isEdifice>
+    </building>
+    <costList>
+      <Steel>900</Steel>
+      <Plasteel>400</Plasteel>
+      <ComponentSpacer>18</ComponentSpacer>
+      <ComponentIndustrial>12</ComponentIndustrial>
+    </costList>
+    <tickerType>Normal</tickerType>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>1300</basePowerConsumption>
+      </li>
+      <li Class="CompProperties_Breakdownable"/>
+      <li Class="CompProperties_Flickable"/>
+    </comps>
+    <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
+    <canOverlapZones>true</canOverlapZones>
+    <constructionSkillPrerequisite>14</constructionSkillPrerequisite>
+  </ThingDef>
+  <!-- teleportarium cogitator (manned control station) -->
+  <ThingDef ParentName="BuildingBase">
+    <thingClass>Teleportarium.Building_TeleportariumCogitator</thingClass>
+    <defName>TeleportariumCogitator</defName>
+    <label>teleportarium cogitator</label>
+    <description>A cogitator of Imperial design, required to guide the teleportarium’s energies through the warp. Only a skilled operator can commune with its cryptic machine spirit and ensure safe passage. When the teleporter is activated the power demands will increase 1000-fold.</description>
+    <graphicData>
+      <texPath>Things/Building/Misc/TeleportariumCogitator</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(3,2.5)</drawSize>
+      <drawRotated>true</drawRotated>
+      <drawOffset>(0,0,-0.05)</drawOffset>
+      <shadowData>
+        <volume>(2.8, 0.4, 0.8)</volume>
+        <offset>(0,0,-0.08)</offset>
+      </shadowData>
+    </graphicData>
+    <researchPrerequisites>
+      <li>WarpMatterTeleportation</li>
+    </researchPrerequisites>
+    <altitudeLayer>Building</altitudeLayer>
+    <passability>Standable</passability>
+    <fillPercent>0.1</fillPercent>
+    <statBases>
+      <MaxHitPoints>250</MaxHitPoints>
+      <WorkToBuild>8000</WorkToBuild>
+      <Flammability>0.2</Flammability>
+    </statBases>
+    <size>(3,1)</size>
+    <hasInteractionCell>True</hasInteractionCell>
+		<interactionCellOffset>(0,0,-1)</interactionCellOffset>
+    <interactionCellIcon>DiningChair</interactionCellIcon>
+    <designationCategory>Misc</designationCategory>
+    <rotatable>true</rotatable>
+    <building>
+      <isEdifice>false</isEdifice>
+    </building>
+    <costList>
+      <Steel>200</Steel>
+      <Plasteel>60</Plasteel>
+      <ComponentSpacer>4</ComponentSpacer>
+      <ComponentIndustrial>2</ComponentIndustrial>
+    </costList>
+    <tickerType>Normal</tickerType>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>500</basePowerConsumption>
+      </li>
+      <li Class="CompProperties_Breakdownable"/>
+      <li Class="CompProperties_Flickable"/>
+      <li Class="CompProperties_Mannable" />
+      <li Class="Teleportarium.CompProperties_Cogitator" />
+    </comps>
+    <terrainAffordanceNeeded>Heavy</terrainAffordanceNeeded>
+    <canOverlapZones>true</canOverlapZones>
+    <constructionSkillPrerequisite>8</constructionSkillPrerequisite>
   </ThingDef>
 </Defs>

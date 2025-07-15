@@ -7,17 +7,29 @@ namespace Teleportarium
 {
     public class Building_TeleportariumPlatform : Building
     {
-        public CompTeleportarium TeleportariumComp => this.GetComp<CompTeleportarium>();
+        public string customName = null;
+
+        public override void SpawnSetup(Map map, bool respawningAfterLoad)
+        {
+            base.SpawnSetup(map, respawningAfterLoad);
+            if (string.IsNullOrEmpty(customName))
+            {
+                int count = map.listerBuildings.AllBuildingsColonistOfDef(this.def).Count;
+                customName = $"Teleportarium Platform {count}";
+            }
+        }
 
         public override IEnumerable<Gizmo> GetGizmos()
         {
             foreach (var g in base.GetGizmos())
                 yield return g;
-            if (TeleportariumComp != null)
+            yield return new Command_Action
             {
-                foreach (var g in TeleportariumComp.CompGetGizmosExtra())
-                    yield return g;
-            }
+                defaultLabel = "Rename Teleporter Pad",
+                defaultDesc = "Set a custom name for this teleporter pad.",
+                icon = ContentFinder<Texture2D>.Get("UI/Buttons/Rename"),
+                action = () => Find.WindowStack.Add(new Dialog_RenamePad(this))
+            };
         }
     }
 }

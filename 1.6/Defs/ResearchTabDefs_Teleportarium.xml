@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Teleportarium research tab -->
+  <ResearchTabDef>
+    <defName>TeleportariumTab</defName>
+    <label>Teleportarium</label>
+    <generalTitle>Teleportation</generalTitle>
+    <description>Research into teleportation technology utilizing the immaterium, unlocking advanced methods of instantaneous travel.</description>
+    <generalDescription>ResearchTabWindow</generalDescription>
+  </ResearchTabDef>
+</Defs>
