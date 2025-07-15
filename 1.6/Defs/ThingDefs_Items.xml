@@ -17,12 +17,12 @@
       <drawSize>0.75</drawSize>
     </graphicData> -->
     <graphicData>
-      <texPath>Things/Pawn/Humanlike/Apparel/BroadshieldPack/BroadshieldPack</texPath>
+      <texPath>Things/Apparel/TeleportHomer</texPath>
       <graphicClass>Graphic_Single</graphicClass>
       <drawSize>(0.7,0.7)</drawSize>
     </graphicData>
     <apparel>
-      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/BroadshieldPack/BroadshieldPack</wornGraphicPath>
+      <wornGraphicPath>Things/Apparel/TeleportHomer</wornGraphicPath>
       <wornGraphicData>
         <renderUtilityAsPack>true</renderUtilityAsPack>
         <north>

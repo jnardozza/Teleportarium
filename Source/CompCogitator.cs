@@ -6,6 +6,7 @@ using Verse.AI;
 using UnityEngine;
 using System.Linq;
 using Verse.Sound;
+using RimWorld;
 
 namespace Teleportarium
 {
@@ -201,22 +202,35 @@ namespace Teleportarium
                 powerUpTicks++;
                 CompPowerTrader power = parent.TryGetComp<CompPowerTrader>();
                 float extraDrain = power != null ? power.Props.PowerConsumption * 1000f : PowerDrain;
-                Log.Message($"[Teleportarium] Powering up: extraDrain={extraDrain}, powerComp present={(power != null)}");
                 if (power != null)
                 {
                     power.PowerOutput = -extraDrain;
-                    Log.Message($"[Teleportarium] Set power.PowerOutput to {-extraDrain}");
-                    // Check for sufficient power every tick
-                    if (power.PowerNet != null && power.PowerNet.CurrentStoredEnergy() < 0.01f)
+                    // Log current stored energy before failure check
+                    if (power.PowerNet != null)
                     {
-                        parent.HitPoints = Mathf.Max(1, parent.HitPoints - 50);
-                        poweringUp = false;
-                        powerUpTicks = 0;
-                        power.PowerOutput = -power.Props.PowerConsumption;
-                        if (chargingGlowMote != null && !chargingGlowMote.Destroyed)
-                            chargingGlowMote.Destroy();
-                        chargingGlowMote = null;
-                        return;
+                        float storedEnergy = power.PowerNet.CurrentStoredEnergy(); // in watt days
+                        float requiredWattDays = extraDrain / 60000f;
+                        if (storedEnergy < requiredWattDays)
+                        {
+                            // Cause breakdown in cogitator
+                            var breakdownComp = parent.TryGetComp<CompBreakdownable>();
+                            breakdownComp?.DoBreakdown();
+                            // Cause breakdown and fire in teleport pad
+                            if (selectedPad != null)
+                            {
+                                var padBreakdownComp = selectedPad.TryGetComp<CompBreakdownable>();
+                                padBreakdownComp?.DoBreakdown();
+                                // Start a fire on the pad
+                                FireUtility.TryStartFireIn(selectedPad.Position, selectedPad.Map, 1.0f, null, null);
+                            }
+                            poweringUp = false;
+                            powerUpTicks = 0;
+                            power.PowerOutput = -power.Props.PowerConsumption;
+                            if (chargingGlowMote != null && !chargingGlowMote.Destroyed)
+                                chargingGlowMote.Destroy();
+                            chargingGlowMote = null;
+                            return;
+                        }
                     }
                 }
                 // Spawn the lightning glow fleck over the teleporter pad every 10 ticks during charging
@@ -233,7 +247,6 @@ namespace Teleportarium
                 {
                     // Play thundercrack sound at start
                     SoundDef sound = SoundDef.Named("teleporter_40k_thundercrack");
-                    Log.Message("[Teleportarium] Attempting to play sound: teleporter_40k_thundercrack. SoundDef is " + (sound == null ? "null" : "not null"));
                     sound?.PlayOneShot(SoundInfo.InMap(parent));
                 }
                 if (powerUpTicks >= PowerUpDuration)
@@ -252,21 +265,69 @@ namespace Teleportarium
             {
                 recallTicks++;
                 CompPowerTrader power = parent.TryGetComp<CompPowerTrader>();
+                float extraRecallDrain = power != null ? power.Props.PowerConsumption * 1000f : RecallPowerDrain;
                 if (power != null)
                 {
-                    power.PowerOutput = -RecallPowerDrain;
-                    // Check for sufficient power every tick
-                    if (power.PowerNet != null && power.PowerNet.CurrentStoredEnergy() < 0.01f)
+                    power.PowerOutput = -extraRecallDrain;
+                    // Log current stored energy before failure check
+                    if (power.PowerNet != null)
                     {
-                        Messages.Message("Teleportation recall failed: insufficient power! Device damaged.", parent, MessageTypeDefOf.NegativeEvent);
-                        parent.HitPoints = Mathf.Max(1, parent.HitPoints - 50);
-                        recallPending = false;
-                        recallTicks = 0;
-                        recallThings = null;
-                        recallHomer = null;
-                        power.PowerOutput = -power.Props.PowerConsumption;
-                        return;
+                        float storedEnergy = power.PowerNet.CurrentStoredEnergy(); // in watt days
+                        float requiredWattDays = extraRecallDrain / 60000f;
+                        if (storedEnergy < requiredWattDays)
+                        {
+                            Messages.Message("Teleportation recall failed: insufficient power! Device damaged.", parent, MessageTypeDefOf.NegativeEvent);
+                            // Cause breakdown in cogitator
+                            var breakdownCompRecall = parent.TryGetComp<CompBreakdownable>();
+                            breakdownCompRecall?.DoBreakdown();
+                            // Cause breakdown and fire in teleport pad
+                            Thing recallPad = null;
+                            var recallPowerComp = parent.TryGetComp<CompPowerTrader>();
+                            if (recallPowerComp != null && recallPowerComp.PowerNet != null)
+                            {
+                                recallPad = recallPowerComp.PowerNet.powerComps
+                                    .Select(pc => pc.parent)
+                                    .FirstOrDefault(t => t.def.defName == "TeleportariumPlatform" || t.def.defName == "TeleportariumPlatformLarge");
+                            }
+                            if (recallPad != null)
+                            {
+                                var padBreakdownComp = recallPad.TryGetComp<CompBreakdownable>();
+                                padBreakdownComp?.DoBreakdown();
+                                // Start a fire on the pad
+                                FireUtility.TryStartFireIn(recallPad.Position, recallPad.Map, 1.0f, null, null);
+                            }
+                            recallPending = false;
+                            recallTicks = 0;
+                            recallThings = null;
+                            recallHomer = null;
+                            power.PowerOutput = -power.Props.PowerConsumption;
+                            return;
+                        }
                     }
+                }
+                // Spawn the lightning glow fleck over the teleporter pad every 10 ticks during recall powering up
+                var powerCompRecall = parent.TryGetComp<CompPowerTrader>();
+                Thing platformRecall = null;
+                if (powerCompRecall != null && powerCompRecall.PowerNet != null)
+                {
+                    platformRecall = powerCompRecall.PowerNet.powerComps
+                        .Select(pc => pc.parent)
+                        .FirstOrDefault(t => t.def.defName == "TeleportariumPlatform" || t.def.defName == "TeleportariumPlatformLarge");
+                }
+                if (platformRecall != null && recallTicks % 10 == 0)
+                {
+                    Vector3 padCenter = platformRecall.Position.ToVector3Shifted();
+                    Map padMap = platformRecall.Map;
+                    if (padMap != null)
+                    {
+                        FleckMaker.ThrowLightningGlow(padCenter, padMap, 3.5f);
+                    }
+                }
+                if (recallTicks == 1 && platformRecall != null)
+                {
+                    // Play thundercrack sound at start of recall
+                    SoundDef sound = SoundDef.Named("teleporter_40k_thundercrack");
+                    sound?.PlayOneShot(SoundInfo.InMap(platformRecall));
                 }
                 if (recallTicks >= RecallDelay)
                 {
@@ -301,6 +362,9 @@ namespace Teleportarium
                         i++;
                     }
                     recallHomer.ConsumeCharge();
+                    // Play base game lightning sound effect (on-map variant for more impact)
+                    SoundDef lightningSound = SoundDef.Named("Thunder_OnMap");
+                    lightningSound?.PlayOneShot(SoundInfo.InMap(platform));
                     Messages.Message($"Teleport recall complete! ({recallHomer.ChargesLeft} charges left)", platform, MessageTypeDefOf.PositiveEvent);
                     recallPending = false;
                     recallTicks = 0;
