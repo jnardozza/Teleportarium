@@ -129,7 +129,6 @@
     </researchPrerequisites>
     <altitudeLayer>Building</altitudeLayer>
     <passability>PassThroughOnly</passability>
-    <fillPercent>0.1</fillPercent>
     <statBases>
       <MaxHitPoints>250</MaxHitPoints>
       <WorkToBuild>8000</WorkToBuild>

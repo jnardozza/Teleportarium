@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using RimWorld;
 using RimWorld.Planet;
@@ -7,6 +8,7 @@ using Verse.AI;
 using UnityEngine;
 using System.Linq;
 using Verse.Sound;
+using HarmonyLib;
 
 namespace Teleportarium
 {
@@ -20,11 +22,11 @@ namespace Teleportarium
         private List<Thing> recallThings = null;
         private Teleportarium.CompTeleportHomer recallHomer = null;
         private const int RecallDelay = 360; // 6 seconds at 60 ticks/sec
-        private const float RecallPowerDrain = 20000f; // ~2000 watts second
+        private const float DefaultRecallPowerDrain = 20000f; // ~2000 watts second
         private Map targetMap;
         private IntVec3 targetCell;
         private const int PowerUpDuration = 360; // 6 seconds at 60 ticks/sec
-        private const float PowerDrain = 20000f; // ~2000 watts second
+        private const float DefaultPowerDrain = 20000f; // ~2000 watts second
 
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
@@ -146,6 +148,12 @@ namespace Teleportarium
                 Log.Error($"RecallPawn: pawn.Map is null for recall");
                 return;
             }
+            // Check for active non-player shields before recall teleporting
+            if (HasActiveNonPlayerShields(map))
+            {
+                Messages.Message("Teleportation recall failed: hostile shields are active!", parent, MessageTypeDefOf.RejectInput);
+                return;
+            }
             var center = pawn.Position;
             // Determine recall radius based on teleporter pad size
             int recallRadius = 1; // Default radius
@@ -253,7 +261,7 @@ namespace Teleportarium
             {
                 powerUpTicks++;
                 CompPowerTrader power = parent.TryGetComp<CompPowerTrader>();
-                float extraDrain = power != null ? power.Props.PowerConsumption * 1000f : PowerDrain;
+                float extraDrain = power != null ? power.Props.PowerConsumption * 1000f : DefaultPowerDrain;
                 if (power != null)
                 {
                     power.PowerOutput = -extraDrain;
@@ -281,6 +289,7 @@ namespace Teleportarium
                             if (chargingGlowMote != null && !chargingGlowMote.Destroyed)
                                 chargingGlowMote.Destroy();
                             chargingGlowMote = null;
+                            ReenableSoS2Shields(selectedPad.Map);
                             return;
                         }
                     }
@@ -300,10 +309,12 @@ namespace Teleportarium
                     // Play thundercrack sound at start
                     SoundDef sound = SoundDef.Named("teleporter_40k_thundercrack");
                     sound?.PlayOneShot(SoundInfo.InMap(parent));
+                    DisableSoS2Shields(selectedPad.Map);
                 }
                 if (powerUpTicks >= PowerUpDuration)
                 {
                     DoTeleport();
+                    ReenableSoS2Shields(selectedPad.Map);
                     poweringUp = false;
                     powerUpTicks = 0;
                     if (power != null)
@@ -317,7 +328,7 @@ namespace Teleportarium
             {
                 recallTicks++;
                 CompPowerTrader power = parent.TryGetComp<CompPowerTrader>();
-                float extraRecallDrain = power != null ? power.Props.PowerConsumption * 1000f : RecallPowerDrain;
+                float extraRecallDrain = power != null ? power.Props.PowerConsumption * 1000f : DefaultRecallPowerDrain;
                 if (power != null)
                 {
                     power.PowerOutput = -extraRecallDrain;
@@ -463,6 +474,104 @@ namespace Teleportarium
             lightningSound?.PlayOneShot(SoundInfo.InMap(platform));
             Messages.Message("Teleportation complete!", platform, MessageTypeDefOf.PositiveEvent);
         }
+
+        // Returns true if there are any active shields not owned by the player on the given map
+        public static bool HasActiveNonPlayerShields(Map map)
+        {
+            if (!ModsConfig.IsActive("kentington.saveourship2"))
+                return false;
+
+            var shipMapCompType = AccessTools.TypeByName("SaveOurShip2.ShipMapComp");
+            if (shipMapCompType == null) return false;
+            var getCompMethod = typeof(Map).GetMethod("GetComponent", new[] { typeof(Type) });
+            var shipMapComp = getCompMethod?.Invoke(map, new object[] { shipMapCompType });
+            if (shipMapComp == null) return false;
+            var shieldsField = shipMapCompType.GetField("Shields", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var shields = shieldsField?.GetValue(shipMapComp) as System.Collections.IEnumerable;
+            if (shields == null) return false;
+            var compShipHeatShieldType = AccessTools.TypeByName("SaveOurShip2.CompShipHeatShield");
+            foreach (var shieldObj in shields)
+            {
+                if (compShipHeatShieldType == null || !compShipHeatShieldType.IsInstanceOfType(shieldObj)) continue;
+                var parentField = compShipHeatShieldType.GetField("parent", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var parent = parentField?.GetValue(shieldObj) as Thing;
+                if (parent?.Faction == Faction.OfPlayer) continue;
+                var flickCompField = compShipHeatShieldType.GetField("flickComp", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var flickComp = flickCompField?.GetValue(shieldObj);
+                if (flickComp == null) continue;
+                var switchIsOnProp = flickComp.GetType().GetProperty("SwitchIsOn", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (switchIsOnProp != null && (bool)switchIsOnProp.GetValue(flickComp))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Disables all player-owned SoS2 shields on the given map using reflection
+        // Usage: DisableSoS2Shields(map);
+        public static void DisableSoS2Shields(Map map)
+        {
+            if (!ModsConfig.IsActive("kentington.saveourship2"))
+                return;
+
+            var shipMapCompType = AccessTools.TypeByName("SaveOurShip2.ShipMapComp");
+            if (shipMapCompType == null) return;
+            var getCompMethod = typeof(Map).GetMethod("GetComponent", new[] { typeof(Type) });
+            var shipMapComp = getCompMethod?.Invoke(map, new object[] { shipMapCompType });
+            if (shipMapComp == null) { Log.Message("[Teleportarium] ShipMapComp not found for map"); return; }
+            var shieldsField = shipMapCompType.GetField("Shields", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var shields = shieldsField?.GetValue(shipMapComp) as System.Collections.IEnumerable;
+            if (shields == null) { Log.Message("[Teleportarium] No shields found on ShipMapComp"); return; }
+            var compShipHeatShieldType = AccessTools.TypeByName("SaveOurShip2.CompShipHeatShield");
+            foreach (var shieldObj in shields)
+            {
+                if (compShipHeatShieldType == null || !compShipHeatShieldType.IsInstanceOfType(shieldObj)) continue;
+                var parentField = compShipHeatShieldType.GetField("parent", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var parent = parentField?.GetValue(shieldObj) as Thing;
+                if (parent?.Faction != Faction.OfPlayer) continue;
+                var flickCompField = compShipHeatShieldType.GetField("flickComp", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var flickComp = flickCompField?.GetValue(shieldObj);
+                if (flickComp == null) continue;
+                var switchIsOnProp = flickComp.GetType().GetProperty("SwitchIsOn", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (switchIsOnProp != null && (bool)switchIsOnProp.GetValue(flickComp))
+                {
+                    switchIsOnProp.SetValue(flickComp, false);
+                }
+            }
+        }
+
+        // Re-enables all player-owned SoS2 shields on the given map using reflection
+        // Usage: ReenableSoS2Shields(map);
+        public static void ReenableSoS2Shields(Map map)
+        {
+            if (!ModsConfig.IsActive("kentington.saveourship2"))
+                return;
+
+            var shipMapCompType = AccessTools.TypeByName("SaveOurShip2.ShipMapComp");
+            if (shipMapCompType == null) return;
+            var getCompMethod = typeof(Map).GetMethod("GetComponent", new[] { typeof(Type) });
+            var shipMapComp = getCompMethod?.Invoke(map, new object[] { shipMapCompType });
+            if (shipMapComp == null) { Log.Message("[Teleportarium] ShipMapComp not found for map"); return; }
+            var shieldsField = shipMapCompType.GetField("Shields", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var shields = shieldsField?.GetValue(shipMapComp) as System.Collections.IEnumerable;
+            if (shields == null) { Log.Message("[Teleportarium] No shields found on ShipMapComp"); return; }
+            var compShipHeatShieldType = AccessTools.TypeByName("SaveOurShip2.CompShipHeatShield");
+            foreach (var shieldObj in shields)
+            {
+                if (compShipHeatShieldType == null || !compShipHeatShieldType.IsInstanceOfType(shieldObj)) continue;
+                var parentField = compShipHeatShieldType.GetField("parent", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var parent = parentField?.GetValue(shieldObj) as Thing;
+                if (parent?.Faction != Faction.OfPlayer) continue;
+                var flickCompField = compShipHeatShieldType.GetField("flickComp", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                var flickComp = flickCompField?.GetValue(shieldObj);
+                if (flickComp == null) continue;
+                var switchIsOnProp = flickComp.GetType().GetProperty("SwitchIsOn", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (switchIsOnProp != null && !(bool)switchIsOnProp.GetValue(flickComp))
+                {
+                    switchIsOnProp.SetValue(flickComp, true);
+                }
+            }
+        }
     }
-    
 }
