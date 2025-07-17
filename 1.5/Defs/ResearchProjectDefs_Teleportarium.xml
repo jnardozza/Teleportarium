@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Warp Matter Teleportation research project -->
+  <ResearchProjectDef>
+    <defName>WarpMatterTeleportation</defName>
+    <label>warp matter teleportation</label>
+    <description>Unlocks the secrets of warp matter teleportation, enabling construction and use of all teleportarium devices and equipment.</description>
+    <baseCost>3000</baseCost>
+    <techLevel>Spacer</techLevel>
+    <prerequisites>
+      <li>ShipBasics</li>
+    </prerequisites>
+    <researchViewX>1</researchViewX>
+    <researchViewY>1</researchViewY>
+    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
+    <tab>TeleportariumTab</tab>
+  </ResearchProjectDef>
+</Defs>

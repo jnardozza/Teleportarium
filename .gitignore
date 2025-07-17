@@ -1,0 +1,86 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+*.vspscc
+*.vssscc
+*.dbmdl
+*.bak
+*.backup
+*.swp
+*.tmp
+*.temp
+*.ide
+*.ipch
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.suo
+*.tlh
+*.tli
+*.cachefile
+*.pidb
+*.svclog
+*.scc
+*.vssscc
+*.vspscc
+*.dbmdl
+*.psess
+*.vsp
+*.vsix
+*.docstates
+*.psess
+*.vsp
+*.vsix
+*.docstates
+
+# Rider
+.idea/
+*.iml
+
+# MonoDevelop
+*.pidb
+*.userprefs
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# RimWorld mod specific
+Teleportarium.pdb
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+*.nuspec
+
+# Others
+*.orig
+*.rej
+*.bak
+*.tmp
+*.swp
+*.swo
+*.swn
+*.~*
+
+# Logs
+*.log
+
+# Test results
+TestResults/

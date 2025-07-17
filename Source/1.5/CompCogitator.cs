@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using RimWorld;
 using RimWorld.Planet;
@@ -6,7 +7,6 @@ using Verse.AI;
 using UnityEngine;
 using System.Linq;
 using Verse.Sound;
-using RimWorld;
 
 namespace Teleportarium
 {
@@ -124,24 +124,72 @@ namespace Teleportarium
         // Recall logic for selected pawn
         private void RecallPawn(Pawn pawn)
         {
+            if (pawn == null)
+            {
+                Log.Error("RecallPawn: pawn is null");
+                return;
+            }
+            if (pawn.apparel == null)
+            {
+                Log.Error($"RecallPawn: pawn.apparel is null for {pawn}");
+                return;
+            }
             var homer = pawn.apparel.WornApparel.Select(a => a.GetComp<Teleportarium.CompTeleportHomer>()).FirstOrDefault(c => c != null && c.CanRecall);
             if (homer == null)
             {
-                Messages.Message("Selected pawn does not have a charged teleport homer.", MessageTypeDefOf.RejectInput);
+                Log.Warning($"RecallPawn: No charged teleport homer found for pawn {pawn}");
                 return;
             }
             var map = pawn.Map;
+            if (map == null)
+            {
+                Log.Error($"RecallPawn: pawn.Map is null for recall");
+                return;
+            }
             var center = pawn.Position;
-            var cells = GenRadial.RadialCellsAround(center, 1, true).Take(4).ToList();
+            // Determine recall radius based on teleporter pad size
+            int recallRadius = 1; // Default radius
+            var powerComp = parent.TryGetComp<CompPowerTrader>();
+            Thing recallPad = null;
+            if (powerComp != null && powerComp.PowerNet != null)
+            {
+                recallPad = powerComp.PowerNet.powerComps
+                    .Select(pc => pc.parent)
+                    .FirstOrDefault(t => t.def.defName == "TeleportariumPlatformLarge") ??
+                    powerComp.PowerNet.powerComps.Select(pc => pc.parent)
+                    .FirstOrDefault(t => t.def.defName == "TeleportariumPlatform");
+                if (recallPad != null)
+                {
+                    // Use a larger radius for large pads
+                    if (recallPad.def.defName == "TeleportariumPlatformLarge")
+                        recallRadius = 2;
+                    else
+                        recallRadius = 1;
+                }
+                else
+                {
+                    Log.Warning("RecallPawn: No recallPad found on power net.");
+                }
+            }
+            else
+            {
+                Log.Warning("RecallPawn: powerComp or powerComp.PowerNet is null.");
+            }
+            var cells = GenRadial.RadialCellsAround(center, recallRadius, true).ToList();
             var thingsToRecall = new List<Thing>();
             foreach (var cell in cells)
             {
                 if (!cell.InBounds(map)) continue;
                 thingsToRecall.AddRange(map.thingGrid.ThingsListAt(cell).Where(t => t is Pawn || !(t is Building)));
             }
+            // Always include the pawn with the teleport homer
+            if (!thingsToRecall.Contains(pawn))
+            {
+                thingsToRecall.Add(pawn);
+            }
             if (thingsToRecall.Count == 0)
             {
-                Messages.Message("No pawns or items to recall!", MessageTypeDefOf.RejectInput);
+                Log.Warning("RecallPawn: No pawns or items to recall in radius (should not happen).");
                 return;
             }
             // Begin recall powering up phase
@@ -161,7 +209,7 @@ namespace Teleportarium
                     var map = Find.Maps.FirstOrDefault(m => m.Tile == target.Tile);
                     if (map == null)
                     {
-                        Messages.Message("No map found for selected world tile!", MessageTypeDefOf.RejectInput);
+                        Messages.Message("You must have visibility of this map tile before teleporting!", MessageTypeDefOf.RejectInput);
                         return false;
                     }
                     Current.Game.CurrentMap = map;
@@ -186,6 +234,10 @@ namespace Teleportarium
         {
             if (destMap != null && target.Cell.IsValid)
             {
+                if (parent == null)
+                {
+                    Log.Error("OnCellTargetSelected: parent is null");
+                }
                 targetMap = destMap;
                 targetCell = target.Cell;
                 poweringUp = true;
@@ -396,10 +448,10 @@ namespace Teleportarium
                 Messages.Message("No pawns or items to teleport!", platform, MessageTypeDefOf.RejectInput);
                 return;
             }
-
             foreach (var thing in things)
             {
-                IntVec3 dest = CellFinder.RandomClosewalkCellNear(targetCell, targetMap, 5);
+                IntVec3 dest;
+                dest = CellFinder.RandomClosewalkCellNear(targetCell, targetMap, 5);
                 if (thing.Spawned)
                 {
                     thing.DeSpawn();

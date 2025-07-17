@@ -1,0 +1,48 @@
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{30e2afed-afc2-435c-9863-0b849d7fe1c2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Teleportarium</RootNamespace>
+    <AssemblyName>Teleportarium</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="SaveOurShip2">
+      <HintPath>..\..\..\SaveOurShip2-super_unstable\1.5\Assemblies\ShipsHaveInsides.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include=".\*.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="CopyToAssemblies" AfterTargets="Build">
+    <MakeDir Directories="$(MSBuildProjectDirectory)\..\..\1.6\Assemblies\" />
+    <Copy SourceFiles="$(TargetDir)$(TargetFileName)"
+          DestinationFolder="$(MSBuildProjectDirectory)\..\..\1.6\Assemblies\"
+          SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="CleanBinObj" AfterTargets="Build">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\bin" />
+    <RemoveDir Directories="$(MSBuildProjectDirectory)\obj" />
+  </Target>
+</Project>

@@ -16,26 +16,29 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\RimWorld\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>..\..\..\..\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="SaveOurShip2">
+      <HintPath>..\..\..\SaveOurShip2-super_unstable\1.5\Assemblies\ShipsHaveInsides.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Source\*.cs" />
+    <Compile Include=".\*.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="CopyToAssemblies" AfterTargets="Build">
-    <MakeDir Directories="$(MSBuildProjectDirectory)\1.6\Assemblies\" />
+    <MakeDir Directories="$(MSBuildProjectDirectory)\..\..\1.5\Assemblies\" />
     <Copy SourceFiles="$(TargetDir)$(TargetFileName)"
-          DestinationFolder="$(MSBuildProjectDirectory)\1.6\Assemblies\"
+          DestinationFolder="$(MSBuildProjectDirectory)\..\..\1.5\Assemblies\"
           SkipUnchangedFiles="true" />
   </Target>
   <Target Name="CleanBinObj" AfterTargets="Build">
